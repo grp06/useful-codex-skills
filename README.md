@@ -8,6 +8,7 @@ A small collection of Codex skills for planning and architecture workflows.
 - `implement-execplan`: Executes a pending ExecPlan from the `.agent` folder, step by step.
 - `architecture-docs-creator`: Produces an `ARCHITECTURE.md` before implementation, capturing current structure and design intent.
 - `update-architecture-docs`: Refreshes `ARCHITECTURE.md` after implementation so docs match the code.
+- `bead-creator`: Scans a repo and creates 3–5 Beads issues (via `br`) to seed a backlog, optionally focused on reliability/features/perf/security/docs/etc.
 
 ## Usage
 Each skill lives in its own folder and is documented in its `SKILL.md`.
