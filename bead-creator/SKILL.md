@@ -28,7 +28,8 @@ Create a small, high-quality set of new Beads (“br” issues) for a repo based
 
 4. **Fast repo understanding**
    - Read (if present): `README.md`, `ARCHITECTURE.md`.
-   - Create a lightweight “repo map” using quick searches (don’t deep-read everything).
+   - Build a lightweight *mental model* of the repo using quick searches (don’t deep-read everything).
+   - Do **not** create new documentation files or “repo map” artifacts; keep any notes in the chat response only.
 
 5. **Create 3–5 beads**
    - Keep each bead small and action-oriented.
@@ -127,6 +128,7 @@ If the user specifies a focus, bias bead selection accordingly:
 ## Guardrails
 
 - **Do not change repo code** unless the user asked for implementation; this skill’s job is to create beads.
+- **Do not create new documentation files** (no README/ARCHITECTURE updates, no new “repo-map” docs). Any repo understanding stays in the chat response.
 - **Only touch `.beads/`** (via `br`).
 - **Do not run git commands** unless the user explicitly asks.
 - If repo context is insufficient, ask 1–2 targeted questions rather than guessing.
