@@ -4,6 +4,7 @@ description: >-
   Land a PR end-to-end: temp rebase, full gate, merge, and thank contributor.
   Use when asked to land a PR, merge a PR with rebase, or finalize a pull request.
 ---
+# /landpr
 
 Input
 - PR: $1 (number or URL). If missing: use most recent PR in convo; if ambiguous: ask.
@@ -13,7 +14,7 @@ Goal
 
 0) Guardrails
 - `git status -sb` clean (no local changes).
-- If PR is draft, has conflicts, or you can't push to head branch: stop + ask.
+- If PR is draft, has conflicts, or you can’t push to head branch: stop + ask.
 - Prefer repo default branch as base (often `main`).
 
 1) Capture PR context
@@ -48,7 +49,7 @@ git rebase "temp/landpr-$prnum"
 - All code changes and tests should already be complete from prior review steps.
 
 5) Gate (before commit)
-- Run full repo gate (lint/typecheck/tests/docs). Example: `pnpm lint && pnpm build && pnpm test`.
+- Run full repo gate (lint/typecheck/tests/docs). Prefer a single `pnpm check` if the repo defines it (for example, OpenClaw: `pnpm check` runs `pnpm tsgo && pnpm lint && pnpm format`). Otherwise: `pnpm lint && pnpm build && pnpm test`.
 
 6) Commit (via `committer`)
 
