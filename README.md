@@ -20,6 +20,7 @@ GitHub PR workflows
 - `pr-review-r4`: Implement the final plan and evaluate test coverage.
 - `land-pr`: Land a PR end-to-end: temp rebase, full gate, merge, and thank the contributor.
 - `find-good-prs`: Find high-value, low-risk PRs ready to merge (currently targeted at `openclaw/openclaw`).
+- `find-contributor-prs`: Find open PRs from top contributing authors, ordered by contributor rank (currently targeted at `openclaw/openclaw`).
 
 ## Usage
 Each skill lives in its own folder and is documented in its `SKILL.md`.
