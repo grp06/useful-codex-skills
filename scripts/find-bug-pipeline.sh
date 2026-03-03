@@ -56,6 +56,17 @@ require_cmd jq
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 SKILLS_ROOT="$CODEX_HOME/skills"
 USEFUL_SKILLS_ROOT="$CODEX_HOME/useful-codex-skills"
+STREAM_LOGS="${FIND_BUG_STREAM_LOGS:-1}"
+HEARTBEAT_SECONDS="${FIND_BUG_HEARTBEAT_SECONDS:-20}"
+
+if [[ "$STREAM_LOGS" != "0" && "$STREAM_LOGS" != "1" ]]; then
+  echo "error: FIND_BUG_STREAM_LOGS must be 0 or 1 (got: $STREAM_LOGS)" >&2
+  exit 1
+fi
+if ! [[ "$HEARTBEAT_SECONDS" =~ ^[0-9]+$ ]]; then
+  echo "error: FIND_BUG_HEARTBEAT_SECONDS must be an integer (got: $HEARTBEAT_SECONDS)" >&2
+  exit 1
+fi
 
 skill_find="$SKILLS_ROOT/find-bug-generic/SKILL.md"
 skill_improve="$SKILLS_ROOT/execplan-improve/SKILL.md"
@@ -86,6 +97,7 @@ run_id="findbug-${timestamp}-$$"
 slug="$(slugify_prompt "$user_prompt")"
 branch_name="codex/find-bug-${slug}-${timestamp}"
 base_ref="origin/main"
+script_path="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/$(basename -- "${BASH_SOURCE[0]}")"
 
 worktree_dir="$CODEX_HOME/worktrees/find-bug/$repo_name/$run_id"
 run_dir="$CODEX_HOME/runs/find-bug-pipeline/$repo_name/$run_id"
@@ -100,6 +112,22 @@ start_head=""
 end_head=""
 final_commit=""
 error_message=""
+script_sha256=""
+script_snapshot_path="$run_dir/find-bug-pipeline.sh.snapshot"
+runtime_dir="$worktree_dir/.find-bug-runtime"
+npm_cache_dir="$runtime_dir/npm-cache"
+npm_tmp_dir="$runtime_dir/npm-tmp"
+npm_userconfig_path="$runtime_dir/npmrc"
+bootstrap_log_path="$run_dir/logs/bootstrap-node.log"
+
+if command -v shasum >/dev/null 2>&1; then
+  script_sha256="$(shasum -a 256 "$script_path" | awk '{print $1}')"
+elif command -v sha256sum >/dev/null 2>&1; then
+  script_sha256="$(sha256sum "$script_path" | awk '{print $1}')"
+else
+  script_sha256="unavailable"
+fi
+cp "$script_path" "$script_snapshot_path"
 
 write_manifest() {
   jq -n \
@@ -118,6 +146,9 @@ write_manifest() {
     --arg end_head "$end_head" \
     --arg final_commit "$final_commit" \
     --arg error_message "$error_message" \
+    --arg script_path "$script_path" \
+    --arg script_sha256 "$script_sha256" \
+    --arg script_snapshot_path "$script_snapshot_path" \
     '{
       schema_version: $schema_version,
       run_id: $run_id,
@@ -133,9 +164,31 @@ write_manifest() {
       start_head: (if $start_head == "" then null else $start_head end),
       end_head: (if $end_head == "" then null else $end_head end),
       final_commit: (if $final_commit == "" then null else $final_commit end),
-      error: (if $error_message == "" then null else $error_message end)
+      error: (if $error_message == "" then null else $error_message end),
+      script: {
+        path: $script_path,
+        sha256: $script_sha256,
+        snapshot_path: $script_snapshot_path
+      }
     }' > "$manifest_path"
 }
+
+on_exit() {
+  local exit_code=$?
+  if [[ "$status" != "completed" ]]; then
+    if [[ -z "$error_message" ]]; then
+      error_message="unexpected_exit stage=$stage exit_code=$exit_code"
+    fi
+    status="failed"
+    write_manifest
+    echo "pipeline_status=failed" >&2
+    echo "error=$error_message" >&2
+    echo "run_id=$run_id" >&2
+    echo "manifest_path=$manifest_path" >&2
+    echo "worktree_dir=$worktree_dir" >&2
+  fi
+}
+trap on_exit EXIT
 
 fail() {
   local message="$1"
@@ -149,22 +202,119 @@ fail() {
   exit 1
 }
 
+bootstrap_worktree_dependencies() {
+  if [[ ! -f "$worktree_dir/package.json" ]]; then
+    return 0
+  fi
+  if ! command -v npm >/dev/null 2>&1; then
+    fail "repository has package.json but npm is not installed"
+  fi
+
+  mkdir -p "$runtime_dir" "$npm_cache_dir" "$npm_tmp_dir"
+  : > "$npm_userconfig_path"
+
+  local install_mode="install"
+  local -a install_cmd=(npm install --no-audit --no-fund)
+  if [[ -f "$worktree_dir/package-lock.json" ]]; then
+    install_mode="ci"
+    install_cmd=(npm ci --no-audit --no-fund)
+  fi
+
+  echo "bootstrap_started=node_deps mode=$install_mode"
+  echo "bootstrap_log=$bootstrap_log_path"
+  if ! (
+    cd "$worktree_dir"
+    NPM_CONFIG_CACHE="$npm_cache_dir" \
+    NPM_CONFIG_USERCONFIG="$npm_userconfig_path" \
+    NPM_CONFIG_TMP="$npm_tmp_dir" \
+    npm_config_cache="$npm_cache_dir" \
+    npm_config_userconfig="$npm_userconfig_path" \
+    npm_config_tmp="$npm_tmp_dir" \
+    "${install_cmd[@]}"
+  ) >"$bootstrap_log_path" 2>&1; then
+    fail "dependency bootstrap failed (see $bootstrap_log_path)"
+  fi
+  echo "bootstrap_completed=node_deps mode=$install_mode"
+}
+
 run_stage() {
   local stage_name="$1"
   local prompt_path="$2"
   local schema_path="$3"
   local output_path="$4"
   local log_path="$5"
+  local stage_started_epoch
+  local heartbeat_pid=""
+  local stage_status
+  local -a codex_cmd=(
+    codex -a never exec --ephemeral -C "$worktree_dir"
+    -s workspace-write
+    --add-dir "$SKILLS_ROOT"
+    --add-dir "$USEFUL_SKILLS_ROOT"
+    --add-dir "$HOME/.npm"
+    --output-schema "$schema_path"
+    -o "$output_path"
+    -c 'shell_environment_policy.include_only=["PATH","HOME","TERM","SSH_AUTH_SOCK","NPM_CONFIG_CACHE","NPM_CONFIG_USERCONFIG","NPM_CONFIG_TMP","npm_config_cache","npm_config_userconfig","npm_config_tmp"]'
+    -
+  )
 
-  if ! printf '%s\n' "$(<"$prompt_path")" | codex -a never exec --ephemeral -C "$worktree_dir" \
-    -s workspace-write \
-    --add-dir "$SKILLS_ROOT" \
-    --add-dir "$USEFUL_SKILLS_ROOT" \
-    --output-schema "$schema_path" \
-    -o "$output_path" \
-    - >"$log_path" 2>&1; then
+  mkdir -p "$(dirname -- "$log_path")"
+  : > "$log_path"
+
+  echo "stage_started=$stage_name"
+  echo "stage_log=$log_path"
+
+  stage_started_epoch="$(date +%s)"
+  if (( HEARTBEAT_SECONDS > 0 )); then
+    (
+      while true; do
+        sleep "$HEARTBEAT_SECONDS"
+        if [[ -f "$log_path" ]]; then
+          log_bytes="$(wc -c < "$log_path" | tr -d ' ')"
+        else
+          log_bytes="0"
+        fi
+        now_epoch="$(date +%s)"
+        echo "stage_heartbeat=$stage_name elapsed_sec=$((now_epoch-stage_started_epoch)) log_bytes=$log_bytes"
+      done
+    ) &
+    heartbeat_pid="$!"
+  fi
+
+  set +e
+  if [[ "$STREAM_LOGS" == "1" ]]; then
+    printf '%s\n' "$(<"$prompt_path")" | \
+      NPM_CONFIG_CACHE="$npm_cache_dir" \
+      NPM_CONFIG_USERCONFIG="$npm_userconfig_path" \
+      NPM_CONFIG_TMP="$npm_tmp_dir" \
+      npm_config_cache="$npm_cache_dir" \
+      npm_config_userconfig="$npm_userconfig_path" \
+      npm_config_tmp="$npm_tmp_dir" \
+      "${codex_cmd[@]}" 2>&1 | tee -a "$log_path"
+    stage_status=$?
+  else
+    printf '%s\n' "$(<"$prompt_path")" | \
+      NPM_CONFIG_CACHE="$npm_cache_dir" \
+      NPM_CONFIG_USERCONFIG="$npm_userconfig_path" \
+      NPM_CONFIG_TMP="$npm_tmp_dir" \
+      npm_config_cache="$npm_cache_dir" \
+      npm_config_userconfig="$npm_userconfig_path" \
+      npm_config_tmp="$npm_tmp_dir" \
+      "${codex_cmd[@]}" >"$log_path" 2>&1
+    stage_status=$?
+  fi
+  set -e
+
+  if [[ -n "$heartbeat_pid" ]]; then
+    kill "$heartbeat_pid" 2>/dev/null || true
+    wait "$heartbeat_pid" 2>/dev/null || true
+  fi
+
+  if [[ "$stage_status" -ne 0 ]]; then
     fail "codex stage failed: $stage_name (see $log_path)"
   fi
+
+  echo "stage_completed=$stage_name"
 }
 
 cat > "$run_dir/schemas/stage-find.schema.json" <<'EOF'
@@ -209,6 +359,7 @@ echo "repo_root=$repo_root"
 echo "base_ref=$base_ref"
 echo "branch=$branch_name"
 echo "worktree_dir=$worktree_dir"
+echo "logs_dir=$run_dir/logs"
 echo "manifest_path=$manifest_path"
 
 if ! git -C "$repo_root" fetch origin main --prune >"$run_dir/logs/git-fetch.log" 2>&1; then
@@ -222,6 +373,8 @@ fi
 if ! start_head="$(git -C "$worktree_dir" rev-parse HEAD 2>/dev/null)"; then
   fail "unable to resolve start HEAD in new worktree"
 fi
+mkdir -p "$runtime_dir" "$HOME/.npm"
+bootstrap_worktree_dependencies
 write_manifest
 
 stage="find"
