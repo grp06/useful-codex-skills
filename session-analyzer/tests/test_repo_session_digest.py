@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 SCRIPT_PATH = (
-    Path("/Users/georgepickett/.codex/skills/analyzing-codex-sessions/scripts/repo_session_digest.py")
+    Path("/Users/georgepickett/.codex/skills/session-analyzer/scripts/repo_session_digest.py")
 )
 SPEC = importlib.util.spec_from_file_location("repo_session_digest", SCRIPT_PATH)
 MODULE = importlib.util.module_from_spec(SPEC)

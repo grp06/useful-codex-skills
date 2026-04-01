@@ -1,5 +1,5 @@
 ---
-name: analyzing-codex-sessions
+name: session-analyzer
 description: >-
   Analyze Codex session logs for one repository, extract the repo-specific top-level
   conversations for a target day, summarize every user message in order, and surface
@@ -8,7 +8,7 @@ description: >-
   work, or to reconstruct repo workstreams from session history.
 ---
 
-# Analyzing Codex Sessions
+# Session Analyzer
 
 ## Overview
 Use this skill when the job is "figure out what happened in Codex sessions for repo X and synthesize the next move" rather than doing open-ended manual log spelunking.
@@ -31,7 +31,7 @@ The script now does more than enumerate sessions:
 Run the extractor first.
 
 ```bash
-python3 ~/.codex/skills/analyzing-codex-sessions/scripts/repo_session_digest.py \
+python3 ~/.codex/skills/session-analyzer/scripts/repo_session_digest.py \
   --repo ~/TaskRally \
   --when yesterday \
   --format markdown \
@@ -43,7 +43,7 @@ If the user gave a specific date, replace `--when yesterday` with `--date YYYY-M
 If the user asked for a recent rolling window instead of a calendar day:
 
 ```bash
-python3 ~/.codex/skills/analyzing-codex-sessions/scripts/repo_session_digest.py \
+python3 ~/.codex/skills/session-analyzer/scripts/repo_session_digest.py \
   --repo ~/TaskRally \
   --last-hours 6 \
   --format markdown \
@@ -53,7 +53,7 @@ python3 ~/.codex/skills/analyzing-codex-sessions/scripts/repo_session_digest.py 
 If you want machine-readable output for follow-on processing:
 
 ```bash
-python3 ~/.codex/skills/analyzing-codex-sessions/scripts/repo_session_digest.py \
+python3 ~/.codex/skills/session-analyzer/scripts/repo_session_digest.py \
   --repo ~/TaskRally \
   --date 2026-03-31 \
   --format json \
