@@ -5,6 +5,7 @@ A small collection of Codex skills for planning, architecture, and GitHub PR wor
 ## Included skills
 
 Planning / architecture
+- `analyzing-codex-sessions`: Reconstruct repo-specific recent Codex workstreams from session logs and recommend the next best action.
 - `architecture-docs-creator`: Produces an `ARCHITECTURE.md` before implementation, capturing current structure and design intent.
 - `update-architecture-docs`: Refreshes `ARCHITECTURE.md` after implementation so docs match the code.
 - `execplan-create`: Turns a PRD/RFC/brief into a concrete step-by-step ExecPlan that is ready to execute.
@@ -22,6 +23,8 @@ GitHub PR workflows
 
 ## How to use
 Each skill lives in its own folder and is documented in its `SKILL.md`.
+
+Published skills are meant to live in this repo and be symlinked into `~/.codex/skills` with `publish.sh`, so edits here stay live in Codex without copy drift.
 
 ## Using them together
 1. Run `architecture-docs-creator` to establish a baseline `ARCHITECTURE.md`.
@@ -42,7 +45,7 @@ This repo also ships a simple orchestrator script that chains skills in a fresh 
 ### One-time setup
 
 ```bash
-cd ~/.codex/useful-codex-skills
+cd /path/to/useful-codex-skills
 ./publish.sh find-bug-generic
 ./publish.sh --link-all
 ```
@@ -52,7 +55,7 @@ cd ~/.codex/useful-codex-skills
 Run this inside any target repository:
 
 ```bash
-~/.codex/useful-codex-skills/scripts/install-find-bug-wrapper.sh
+/path/to/useful-codex-skills/scripts/install-find-bug-wrapper.sh
 ```
 
 This creates a local `./find-bug` wrapper and adds `find-bug` to `.git/info/exclude` so it stays untracked.
@@ -65,7 +68,12 @@ From repo root:
 ./find-bug "look deeply into how we manage dependencies"
 ```
 
-The script creates a new worktree from `origin/main`, runs the four stages above, keeps the worktree for inspection, and prints `run_id`, `worktree_dir`, `done_plan_path`, and `final_commit`.
+The script creates a new worktree from `origin/main`, runs the four stages above, keeps the worktree for inspection, streams stage logs live, emits periodic `stage_heartbeat` lines during long stages, and prints `run_id`, `worktree_dir`, `logs_dir`, `done_plan_path`, and `final_commit`.
+
+Optional runtime tuning:
+
+- `FIND_BUG_STREAM_LOGS=0` disables live streaming (logs are still written to `logs_dir`).
+- `FIND_BUG_HEARTBEAT_SECONDS=10` changes heartbeat interval (default `20`).
 
 ## License
 MIT
