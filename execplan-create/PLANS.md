@@ -6,7 +6,7 @@ This document describes the requirements for an execution plan ("ExecPlan"), a d
 
 When authoring an executable specification (ExecPlan), follow PLANS.md _to the letter_. If it is not in your context, refresh your memory by reading the entire PLANS.md file. Be thorough in reading (and re-reading) source material to produce an accurate specification. When creating a spec, start from the skeleton and flesh it out as you do your research.
 
-When implementing an executable specification (ExecPlan), do not prompt the user for "next steps"; simply proceed to the next milestone. Keep all sections up to date, add or split entries in the list at every stopping point to affirmatively state the progress made and next steps. Resolve ambiguities autonomously. For each milestone, write failing tests first (when tests are specified), implement until all tests pass, then commit the verified changes before proceeding to the next milestone. If the repo uses Beads, use `br ready` to select work and update issue status as you progress.
+When implementing an executable specification (ExecPlan), do not prompt the user for "next steps"; simply proceed to the next milestone. Keep all sections up to date, add or split entries in the list at every stopping point to affirmatively state the progress made and next steps. Resolve ambiguities autonomously, and commit frequently.
 
 When discussing an executable specification (ExecPlan), record decisions in a log in the spec for posterity; it should be unambiguously clear why any change to the specification was made. ExecPlans are living documents, and it should always be possible to restart from _only_ the ExecPlan and no other work.
 
@@ -48,41 +48,35 @@ Be idempotent and safe. Write the steps so they can be run multiple times withou
 
 Validation is not optional. Include instructions to run tests, to start the system if applicable, and to observe it doing something useful. Describe comprehensive testing for any new features or capabilities. Include expected outputs and error messages so a novice can tell success from failure. Where possible, show how to prove that the change is effective beyond compilation (for example, through a small end-to-end scenario, a CLI invocation, or an HTTP request/response transcript). State the exact test commands appropriate to the project’s toolchain and how to interpret their results.
 
-When specifying tests, prefer a test-first approach: describe which tests to write and what they should assert before describing the implementation. This allows the implementing agent to write failing tests first, then implement until the tests pass. Specify the test file paths, test function names, and the exact assertions expected. If the project has an existing test structure, follow its conventions.
-
 Capture evidence. When your steps produce terminal output, short diffs, or logs, include them inside the single fenced block as indented examples. Keep them concise and focused on what proves success. If you need to include a patch, prefer file-scoped diffs or small excerpts that a reader can recreate by following your instructions rather than pasting large blobs.
+
+## Design quality lens
+
+Use John Ousterhout's design philosophy as the default lens for shaping the plan and resolving design ambiguity.
+
+Prefer simple mental models over elegant-looking structure. Prefer deep modules over shallow wrappers. Prefer interfaces that hide sequencing and policy details. Prefer fewer concepts, fewer knobs, and fewer special cases. Prefer moving complexity behind a stable boundary over redistributing it across more files.
+
+Treat these as the main forms of complexity:
+
+* Change amplification: one logical change requires edits in many places.
+* Cognitive load: a reader or caller must hold too many facts in mind.
+* Unknown unknowns: important behavior is surprising, implicit, or scattered.
+
+Every ExecPlan should explain the design quality of the proposed change, not just the mechanics. Make it clear:
+
+* what complexity exists today and who pays for it
+* what boundary, module, or interface becomes simpler after the change
+* what knowledge, sequencing, or policy moves out of callers and into the implementation
+* what concepts, branches, or special cases disappear
+* what the complexity dividend is for future readers and future changes
+
+Do not mistake motion for simplification. A plan is weaker if it mainly adds wrappers, adapters, flags, layers, or configuration without hiding more detail from the rest of the system. If a new abstraction is required, state exactly what it hides and why the system is simpler with it than without it.
 
 ## Milestones
 
 Milestones are narrative, not bureaucracy. If you break the work into milestones, introduce each with a brief paragraph that describes the scope, what will exist at the end of the milestone that did not exist before, the commands to run, and the acceptance you expect to observe. Keep it readable as a story: goal, work, result, proof. Progress and milestones are distinct: milestones tell the story, progress tracks granular work. Both must exist. Never abbreviate a milestone merely for the sake of brevity, do not leave out details that could be crucial to a future implementation.
 
 Each milestone must be independently verifiable and incrementally implement the overall goal of the execution plan.
-
-## Verification and Test-Driven Milestones
-
-Every milestone must include built-in verification steps that allow the implementing agent to confirm correctness without human intervention. Prefer test-driven development: write failing tests that define the milestone's acceptance criteria before writing the implementation. The milestone is not complete until all tests pass.
-
-When designing a milestone, follow this verification pattern:
-
-1. Define the acceptance criteria as concrete, observable behaviors.
-2. Write tests (unit, integration, or end-to-end as appropriate) that exercise these behaviors. Run them to confirm they fail for the expected reasons.
-3. Implement the feature or change.
-4. Run the tests again. The milestone is complete only when all tests pass and any other validation steps succeed.
-5. After all tests pass, the implementing agent is permitted (and encouraged) to commit the changes with a clear commit message describing the milestone completed.
-
-If tests are not feasible for a particular milestone (e.g., infrastructure setup, configuration changes, or exploratory prototypes), specify alternative verification steps: commands to run, outputs to observe, or states to confirm. The key requirement is that the agent can autonomously verify success without asking for human confirmation.
-
-Commits should be frequent and atomic. Each milestone that passes verification should be committed before proceeding to the next. This creates a clean history of incremental progress and allows safe rollback if later milestones encounter issues. The commit message should reference the milestone and summarize what was achieved.
-
-## Issue Tracking with Beads
-
-ExecPlans integrate with Beads (`br`) for local issue tracking. When a repo has Beads initialized (`.beads/` directory exists), use it to track milestones as issues.
-
-When authoring an ExecPlan, create a Beads issue for each milestone: `br create "Milestone N: <title>" --type task --priority <0-4> --description "<scope and acceptance criteria>"`. Use `br dep add <child> <parent>` to express milestone dependencies. Record the issue IDs in the Progress section.
-
-When implementing, use `br ready --json` to select the next unblocked milestone. Claim it with `br update <id> --status in_progress`. After verification passes, close it with `br close <id> --reason "Tests pass, committed"`. Run `br sync --flush-only` before committing to include the issue state in git history.
-
-If Beads is not initialized or the user has not requested issue tracking, skip these steps.
 
 ## Living plans and design decisions
 
@@ -108,17 +102,17 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 
     ## Purpose / Big Picture
 
-    Explain in a few sentences what someone gains after this change and how they can see it working. State the user-visible behavior you will enable.
+    Explain in a few sentences what someone gains after this change and how they can see it working. State the user-visible behavior you will enable. Also explain what current complexity or interface burden this change removes.
 
     ## Progress
 
     Use a list with checkboxes to summarize granular steps. Every stopping point must be documented here, even if it requires splitting a partially completed task into two (“done” vs. “remaining”). This section must always reflect the actual current state of the work.
 
-    - [x] (2025-10-01 13:00Z) Example completed step. [BEAD-001]
-    - [ ] Example incomplete step. [BEAD-002]
-    - [ ] Example partially completed step (completed: X; remaining: Y). [BEAD-003]
+    - [x] (2025-10-01 13:00Z) Example completed step.
+    - [ ] Example incomplete step.
+    - [ ] Example partially completed step (completed: X; remaining: Y).
 
-    Use timestamps to measure rates of progress. If using Beads, include the issue ID in brackets after each step.
+    Use timestamps to measure rates of progress.
 
     ## Surprises & Discoveries
 
@@ -141,11 +135,11 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 
     ## Context and Orientation
 
-    Describe the current state relevant to this task as if the reader knows nothing. Name the key files and modules by full path. Define any non-obvious term you will use. Do not refer to prior plans.
+    Describe the current state relevant to this task as if the reader knows nothing. Name the key files and modules by full path. Define any non-obvious term you will use. Do not refer to prior plans. Make clear what callers or maintainers currently need to know that they should not need to know after the change.
 
     ## Plan of Work
 
-    Describe, in prose, the sequence of edits and additions. For each edit, name the file and location (function, module) and what to insert or change. Keep it concrete and minimal.
+    Describe, in prose, the sequence of edits and additions. For each edit, name the file and location (function, module) and what to insert or change. Keep it concrete and minimal. Explain how each major edit deepens a module, hides sequencing or policy, removes a special case, or otherwise reduces system complexity.
 
     ## Concrete Steps
 
@@ -154,14 +148,6 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
     ## Validation and Acceptance
 
     Describe how to start or exercise the system and what to observe. Phrase acceptance as behavior, with specific inputs and outputs. If tests are involved, say "run <project’s test command> and expect <N> passed; the new test <name> fails before the change and passes after>".
-
-    For each milestone, specify the verification workflow:
-    1. Tests to write: List the test file paths, test function names, and assertions. These tests should be written first and must fail before implementation.
-    2. Implementation: Describe the changes to make.
-    3. Verification: Run the tests. The milestone is complete only when all tests pass.
-    4. Commit: After verification passes, commit the changes with a message referencing the milestone.
-
-    Example: "Write test_user_creation in tests/test_users.py that asserts a 201 response with user ID. Run pytest tests/test_users.py -k test_user_creation and confirm it fails. Implement the endpoint. Run the test again and confirm it passes. Commit with message 'Milestone 1: Add user creation endpoint'."
 
     ## Idempotence and Recovery
 
@@ -173,7 +159,7 @@ Prefer additive code changes followed by subtractions that keep tests passing. P
 
     ## Interfaces and Dependencies
 
-    Be prescriptive. Name the libraries, modules, and services to use and why. Specify the types, traits/interfaces, and function signatures that must exist at the end of the milestone. Prefer stable names and paths such as `crate::module::function` or `package.submodule.Interface`. E.g.:
+    Be prescriptive. Name the libraries, modules, and services to use and why. Specify the types, traits/interfaces, and function signatures that must exist at the end of the milestone. Prefer stable names and paths such as `crate::module::function` or `package.submodule.Interface`. For each major interface, say what detail it hides from its callers. E.g.:
 
     In crates/foo/planner.rs, define:
 
