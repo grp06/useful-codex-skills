@@ -6,6 +6,7 @@ A small collection of Codex skills for planning, architecture, and GitHub PR wor
 
 Planning / architecture
 - `session-analyzer`: Reconstruct repo-specific recent Codex workstreams from session logs and recommend the next best action.
+- `tool-error-analyzer`: Reconstruct repo-scoped tool-call failures from rollout transcripts and recommend the next workflow/tooling improvements.
 - `architecture-docs-creator`: Produces an `ARCHITECTURE.md` before implementation, capturing current structure and design intent.
 - `update-architecture-docs`: Refreshes `ARCHITECTURE.md` after implementation so docs match the code.
 - `execplan-create`: Turns a PRD/RFC/brief into a concrete step-by-step ExecPlan that is ready to execute.

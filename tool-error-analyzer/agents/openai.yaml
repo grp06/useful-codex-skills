@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tool Error Analyzer"
+  short_description: "Cluster repo-scoped tool-call failures from Codex sessions"
+  default_prompt: "Use $tool-error-analyzer for ~/TaskRally over the last 24 hours and tell me which repeated tool failures are worth fixing first."
