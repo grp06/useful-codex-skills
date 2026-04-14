@@ -1,4 +1,0 @@
-interface:
-  display_name: "Session Analyzer"
-  short_description: "Summarize repo work from Codex sessions"
-  default_prompt: "Use $session-analyzer to review yesterday's repo conversations, but stop and report the missing thread ids if the digest says coverage is incomplete."

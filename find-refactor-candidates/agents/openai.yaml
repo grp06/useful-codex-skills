@@ -1,0 +1,4 @@
+interface:
+  display_name: "Find Refactor Candidates"
+  short_description: "Search for the strongest refactor shortlist before deciding"
+  default_prompt: "Use $find-refactor-candidates to identify the top refactor candidates, write the assumption ledger for each, and leave the choice uncommitted for later selection."

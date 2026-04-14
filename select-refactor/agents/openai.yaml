@@ -1,0 +1,4 @@
+interface:
+  display_name: "Select Refactor"
+  short_description: "Challenge the shortlist and lock the final refactor choice"
+  default_prompt: "Use $select-refactor to pressure-test the current shortlist, gather cheap repo evidence, and write the final refactor decision before planning."

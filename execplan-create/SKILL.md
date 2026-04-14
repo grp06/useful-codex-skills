@@ -1,27 +1,54 @@
 ---
 name: execplan-create
 description: >-
-  Create an ExecPlan (execution plan) from a PRD, RFC, voice note, or
-  brainstorming blurb, following the repo's PLANS.md. Use when the user asks
-  for an exec plan, execution plan, or ExecPlan, or wants a PRD/RFC turned into
-  a step-by-step plan.
+  Create an ExecPlan from a locked refactor decision, PRD, RFC, or detailed problem statement, following the repo's PLANS.md. Use when the user asks for an exec plan, execution plan, or ExecPlan, or wants a decided refactor turned into a step-by-step plan.
 ---
 
 # ExecPlan Authoring
 
 Write plans the way a strong software designer would: not as a task list for rearranging code, but as a path to a simpler system with clearer boundaries.
 
-## Required inputs
+## Preferred Inputs
 
-- The user must provide a PRD, RFC, or a detailed problem statement. If missing or unclear, ask for clarification before writing the plan.
+Preferred source input is a decided work item produced by `select-refactor`.
 
-## Source of truth
+Supported inputs, in priority order:
+
+1. explicit work-item path
+2. explicit `decision.md` path
+3. `.agent/active` when it points at a work item with `stage="decision"` and `state="completed"`
+4. the most recently updated work item under `.agent/work/` with `stage="decision"` and `state="completed"`
+5. a user-supplied PRD, RFC, voice note, or detailed problem statement
+
+If using a decided work item, do not silently reopen candidate search unless the decision artifact is clearly incomplete.
+
+## Work Item Model
+
+For the new workflow, plans live inside work-item directories:
+
+`.agent/work/<id-slug>/execplan.md`
+
+Each work item should have a small `meta.json` file with:
+
+- `stage`
+- `state`
+- timestamps
+- relative artifact paths
+
+Update `.agent/active` as a convenience symlink when operating on a work item, but do not treat it as authoritative over `meta.json`.
+
+Legacy compatibility:
+
+- If no work-item directory is available and the user explicitly wants the older singleton flow, you may still write `.agent/execplan-pending.md`.
+- Downstream skills will prefer the work-item format and only fall back to legacy singleton files when needed.
+
+## Source of Truth
 
 - Read `{baseDir}/.agent/PLANS.md` in full before drafting.
 - If `{baseDir}/.agent/PLANS.md` is missing, copy this skill's `PLANS.md` to `{baseDir}/.agent/PLANS.md`, then read that copy as the source of truth.
 - Follow PLANS.md exactly. If any instruction conflicts with this skill, PLANS.md wins.
 
-## Ousterhout lens
+## Ousterhout Lens
 
 Use John Ousterhout's design philosophy as the default planning lens:
 
@@ -37,7 +64,7 @@ Treat these as the main forms of complexity:
 - cognitive load
 - unknown unknowns
 
-When authoring a plan, answer these questions explicitly in the plan's prose:
+When authoring a plan, answer these questions explicitly:
 
 - what complexity exists today, and who pays for it
 - what boundary or interface becomes simpler after this work
@@ -45,28 +72,57 @@ When authoring a plan, answer these questions explicitly in the plan's prose:
 - what special cases, duplicate concepts, or orchestration steps disappear
 - what future change becomes easier after this work
 
-Reject plan shapes that mainly add new layers, knobs, or abstraction names without hiding more detail.
+## Workflow
 
-## Output location
+### Step 1: Resolve the input source
 
-- Write the ExecPlan to `.agent/execplan-pending.md` in the target repo.
-- If `.agent/` does not exist, create it before writing the file.
+If operating on a decided work item:
 
-## Format rules
+- read `meta.json`
+- read `decision.md`
 
-- Because `.agent/execplan-pending.md` contains only the ExecPlan, do not wrap it in outer triple backticks.
+If operating from a raw user brief instead:
 
-## Authoring workflow
+- create or reuse a work-item directory under `.agent/work/`
+- initialize or update `meta.json`
+- use the user brief as the planning source
 
-1. Read the user's input and identify the concrete outcomes, acceptance criteria, hard constraints, and any soft guidance about scope or risk.
-2. Inspect the repo to understand the relevant files, current flows, and the complexity being paid today. Ask: what do callers currently need to know, where does sequencing leak, where are concepts duplicated, and where do special cases accumulate.
-3. Decide the plan shape that most reduces system complexity while still satisfying the request. Prefer the path that creates a simpler interface or a deeper owned module, not the one that merely redistributes logic.
-4. Draft the ExecPlan using the skeleton and rules from PLANS.md. Name the exact files and boundaries involved, explain the current pain, and describe the complexity dividend the change is intended to produce.
-5. Ensure required sections exist and are self-contained, novice-friendly, behavior-focused, and explicit about why the design is simpler after the change.
-6. Save to `.agent/execplan-pending.md`.
+### Step 2: Inspect the repo and planning boundaries
 
-## Anti-patterns
+Inspect the relevant files and flows. Ask:
 
-- Do not write a mechanically correct plan that preserves the same complexity under new names.
-- Do not propose thin wrappers or pass-through modules unless the plan can explain exactly what detail they hide.
-- Do not leave key design choices to the implementer when the repo evidence is strong enough to decide now.
+- what callers currently need to know
+- where sequencing leaks
+- where concepts duplicate
+- where special cases accumulate
+
+### Step 3: Draft `execplan.md`
+
+Write the ExecPlan to:
+
+- work-item format: `.agent/work/<id-slug>/execplan.md`
+- legacy fallback only when necessary: `.agent/execplan-pending.md`
+
+The plan should:
+
+- preserve the hard constraints from `decision.md`
+- name the exact files and boundaries involved
+- explain the current pain
+- describe the intended complexity dividend
+- remain self-contained and novice-friendly
+
+### Step 4: Finalize metadata
+
+If using a work item, update `meta.json`:
+
+- `stage="plan"`
+- `state="completed"`
+- `artifacts.execplan="execplan.md"`
+- `updated_at=<now>`
+
+## Anti-Patterns
+
+- reopening candidate search during planning without strong evidence
+- writing a mechanically correct plan that preserves the same complexity under new names
+- proposing thin wrappers or pass-through modules unless they clearly hide detail
+- leaving key design choices to the implementer when the repo evidence is already strong
