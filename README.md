@@ -6,6 +6,7 @@ A small collection of Codex skills for goals, planning, and execution.
 
 Planning / architecture
 - `goalcraft`: Turn a rough draft, vague ambition, or messy task brief into an evidence-checked Codex `/goal` objective.
+- `grill-me`: Pressure-test a plan or design through a focused decision-tree interview.
 - `execplan-create`: Turn a decided refactor, PRD, RFC, or detailed brief into an ExecPlan inside a work-item directory.
 - `execplan-improve`: Read an existing ExecPlan, analyze the referenced code paths, and rewrite the plan with concrete, code-grounded improvements.
 - `implement-execplan`: Execute a work-item ExecPlan or legacy singleton plan while tracking implementation state explicitly.
