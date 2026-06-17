@@ -4,12 +4,15 @@ A small collection of Codex skills for goals, planning, and execution.
 
 ## Included skills
 
-Planning / architecture
-- `goalcraft`: Turn a rough draft, vague ambition, or messy task brief into an evidence-checked Codex `/goal` objective.
+Planning / execution chain
 - `grill-me`: Pressure-test a plan or design through a focused decision-tree interview.
 - `execplan-create`: Turn a decided refactor, PRD, RFC, or detailed brief into an ExecPlan inside a work-item directory.
 - `execplan-improve`: Read an existing ExecPlan, analyze the referenced code paths, and rewrite the plan with concrete, code-grounded improvements.
 - `implement-execplan`: Execute a work-item ExecPlan or legacy singleton plan while tracking implementation state explicitly.
+- `review-recent-work`: Review the latest implemented work item or completed ExecPlan, fix obvious issues, and record the result.
+
+Goal support
+- `goalcraft`: Turn a rough draft, vague ambition, or messy task brief into an evidence-checked Codex `/goal` objective.
 
 ## How to use
 
@@ -19,11 +22,15 @@ Published skills are meant to live in this repo and be symlinked into `~/.codex/
 
 ## Planning Workflow
 
-1. Run `goalcraft` when a durable objective needs a compact, evidence-checked `/goal` contract.
+These skills are typically chained in this order:
+
+1. Run `grill-me` to pressure-test the plan or design before turning it into execution work.
 2. Run `execplan-create` to write `execplan.md` for a decided refactor, PRD, RFC, or detailed brief.
 3. Run `execplan-improve` to audit and strengthen the plan before executing.
 4. Run `implement-execplan` to carry out the plan while updating work-item lifecycle metadata instead of moving files to `done/`.
-5. Review the implementation against the decision rationale and the ExecPlan.
+5. Run `review-recent-work` to review the implementation against the decision rationale and the ExecPlan.
+
+Use `goalcraft` separately when a durable objective needs a compact, evidence-checked `/goal` contract.
 
 ## License
 

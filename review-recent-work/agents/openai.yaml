@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Recent Work"
+  short_description: "Fresh-eyes review of the latest implemented work item"
+  default_prompt: "Use $review-recent-work to review the latest implemented work item, compare the implementation to its decision rationale and ExecPlan, fix issues you find, and score how useful the pass was."
