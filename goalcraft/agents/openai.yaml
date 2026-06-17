@@ -1,0 +1,4 @@
+interface:
+  display_name: "Goalcraft"
+  short_description: "Turn rough drafts into evidence-checked Codex goals"
+  default_prompt: "Use $goalcraft to turn this rough draft into a Codex /goal completion contract and activate it."

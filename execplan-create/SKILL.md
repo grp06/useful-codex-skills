@@ -10,7 +10,7 @@ Write plans the way a strong software designer would: not as a task list for rea
 
 ## Preferred Inputs
 
-Preferred source input is a decided work item produced by `select-refactor`.
+Preferred source input is a decided work item with a completed `decision.md`.
 
 Supported inputs, in priority order:
 
