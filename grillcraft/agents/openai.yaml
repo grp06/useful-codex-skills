@@ -1,0 +1,4 @@
+interface:
+  display_name: "GrillCraft"
+  short_description: "Compile grill decisions into an ExecPlan goal"
+  default_prompt: "Use $grillcraft after a Grill Me session to create decision.md, build and improve an ExecPlan, then activate a Goalcraft execution goal."
