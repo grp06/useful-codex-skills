@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reorient Myself"
+  short_description: "Strategically audit and reorient a Codex task"
+  default_prompt: "Use $reorient-myself to audit this task and produce the single best next prompt."

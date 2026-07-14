@@ -15,6 +15,9 @@ Planning / execution chain
 Goal support
 - `goalcraft`: Turn a rough draft, vague ambition, or messy task brief into an evidence-checked Codex `/goal` objective.
 
+Strategic review
+- `reorient-myself`: Audit a Codex task from first principles and produce one paste-ready prompt to get it back on track.
+
 ## How to use
 
 Each skill lives in its own folder and is documented in its `SKILL.md`.
@@ -30,6 +33,8 @@ These skills are typically chained in this order:
 3. Run `review-recent-work` after implementation when you want a fresh manual review pass.
 
 Use `execplan-create`, `execplan-improve`, and `implement-execplan` directly when you want the lower-level manual workflow instead of the GrillCraft handoff. Use `goalcraft` separately when a durable objective needs a compact, evidence-checked `/goal` contract.
+
+Use `reorient-myself` when a task needs a strategic reset before more planning or implementation.
 
 ## License
 
