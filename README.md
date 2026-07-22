@@ -1,6 +1,6 @@
 # useful-codex-skills
 
-A small collection of Codex skills for goals, planning, and execution.
+A small collection of Codex skills for goals, planning, execution, and code understanding.
 
 ## Included skills
 
@@ -18,9 +18,14 @@ Goal support
 Strategic review
 - `reorient-myself`: Audit a Codex task from first principles and produce one paste-ready prompt to get it back on track.
 
+Code understanding
+- `explain-code-change`: Investigate a diff, commit, branch, or pull request and publish a verified, learning-oriented explanation to the user's connected Notion workspace.
+
 ## How to use
 
 Each skill lives in its own folder and is documented in its `SKILL.md`.
+
+Skills that declare MCP dependencies, such as `explain-code-change`, require the user to connect and authenticate the corresponding integration before use.
 
 Published skills are meant to live in this repo and be symlinked into `~/.codex/skills` with `publish.sh`, so edits here stay live in Codex without copy drift.
 

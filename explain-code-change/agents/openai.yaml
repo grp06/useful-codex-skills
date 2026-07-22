@@ -1,0 +1,11 @@
+interface:
+  display_name: "Explain Code Change"
+  short_description: "Teach code changes with verified mental models"
+  default_prompt: "Use $explain-code-change to investigate this code change and teach it in a verified Notion page."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "notion"
+      description: "Notion workspace access for publishing and verification"
+      transport: "streamable_http"
+      url: "https://mcp.notion.com/mcp"
