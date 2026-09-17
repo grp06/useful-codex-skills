@@ -27,7 +27,7 @@ Each skill lives in its own folder and is documented in its `SKILL.md`.
 
 Skills that declare MCP dependencies, such as `explain-code-change`, require the user to connect and authenticate the corresponding integration before use.
 
-Published skills are meant to live in this repo and be symlinked into `~/.codex/skills` with `publish.sh`, so edits here stay live in Codex without copy drift.
+Published skills are meant to live in this repo and be symlinked into `~/.codex/skills` with `./publish.sh --link-all`, so edits here stay live in Codex without copy drift.
 
 ## Planning Workflow
 
